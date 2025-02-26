@@ -28,14 +28,17 @@ def run_ui():
     # Display chat history
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            if message["role"] == "assistant":
+                st.markdown(message["content"])  # Use markdown for assistant responses
+            else:
+                st.write(message["content"])     # Regular text for user messages
 
     # User input
     user_query = st.chat_input("Your question here...")
     
     if user_query:
         # Add user message to chat
-        st.chat_message("user").markdown(user_query)
+        st.chat_message("user").write(user_query)
         st.session_state.messages.append({"role": "user", "content": user_query})
 
         # Get AI response
@@ -46,7 +49,7 @@ def run_ui():
                     response = AiAssistanceCrew().process_query(user_query)
                     
                     # Display and save response
-                    st.markdown(response)
+                    st.markdown(response)  # Use markdown for rendering
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
