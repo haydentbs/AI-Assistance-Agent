@@ -1,0 +1,29 @@
+query_analysis:
+  description: >
+    Analyze the following user query: "{user_query}"
+    Use the select_specialist tool to determine the most appropriate specialist to handle this query.
+    Return ONLY the specialist name as determined by the tool, with no additional text or explanation.
+  expected_output: >
+    The name of the selected specialist (e.g., "prompt_engineer")
+  agent: overseer
+
+specialist_consultation:
+  description: >
+    As the selected specialist, provide a detailed response to: "{user_query}"
+    Use your specific expertise to give a thorough and accurate answer.
+    Previous analysis determined you are the most qualified to answer this query.
+  expected_output: >
+    A comprehensive response from your specialist perspective addressing the user's query.
+  agent: overseer  # This will be dynamically replaced in the code
+
+response_synthesis:
+  description: >
+    Review the specialist's response to: "{user_query}"
+    Ensure the response is:
+    1. Complete and accurate
+    2. Well-structured and clear
+    3. Actionable and practical
+    Only make minor edits for clarity if needed - do not substantially change the specialist's expertise.
+  expected_output: >
+    The final reviewed and polished response, maintaining the specialist's expert guidance.
+  agent: overseer
