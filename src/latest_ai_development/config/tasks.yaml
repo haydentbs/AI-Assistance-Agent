@@ -7,6 +7,14 @@ query_analysis:
     The name of the selected specialist (e.g., "prompt_engineer")
   agent: overseer
 
+simple_response:
+  description: >
+    Analyze the users query: "{user_query}"
+    If it is simple reply to it yourself in a friendly chatbot manner without delegating the task to any other agents.
+  expected_output: >
+    Response to the users simple query
+  agent: overseer
+
 specialist_consultation:
   description: >
     As the selected specialist, provide a detailed response to: "{user_query}"

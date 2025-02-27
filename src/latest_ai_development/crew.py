@@ -18,6 +18,7 @@ class AiAssistanceCrew():
 
 	def __init__(self):
 		self.knowledge_base = self.load_knowledge_base()
+		self.chat_history = []  # Add chat history list
 
 	def load_knowledge_base(self):
 		# Implement knowledge base loading from provided docs
@@ -29,7 +30,6 @@ class AiAssistanceCrew():
 			config=self.agents_config['overseer'],
 			verbose=True,
 			allow_delegation=True,
-			tools_enabled=False
 		)
 	
 	@agent
@@ -55,44 +55,21 @@ class AiAssistanceCrew():
 
 	def create_crew(self, user_query: str) -> Crew:
 		"""Creates a crew instance with the given query"""
-		# Task for the overseer to analyze and route the query
-		analysis_task = Task(
+		# Format chat history for context
+		chat_context = "\n".join([
+			f"{'User' if i%2==0 else 'Assistant'}: {msg}"
+			for i, msg in enumerate(self.chat_history[-6:])  # Last 3 exchanges
+		])
+
+		# Task for direct response
+		response_task = Task(
 			description=f"""
-			Analyze this query and respond appropriately: {user_query}
+			Previous conversation:
+			{chat_context if self.chat_history else "No previous conversation"}
 
-			You are capable of direct conversation and should:
-			- Respond directly to greetings (like "hi", "hello", etc.)
-			- Answer general questions about AI and technology
-			- Engage in casual conversation
-			- Provide helpful responses to basic queries
-			- Handle follow-up questions
+			Current query: {user_query}
 
-			Format your responses using markdown:
-			- Use **bold** for emphasis
-			- Use headings where appropriate (# for main headings)
-			- Use bullet points for lists
-			- Use code blocks with ```language for code
-			- Use > for quotes or important notes
-
-			Only delegate to the prompt expert (using 'DELEGATE: <reason>') if the query specifically requires
-			expertise in:
-			- Prompt engineering techniques
-			- LLM chain design
-			- Prompt optimization strategies
-			- Complex LLM interaction patterns
-
-			For everything else, provide a friendly and helpful response yourself in markdown format.
-			""",
-			expected_output="Either a markdown-formatted response or 'DELEGATE: <reason>'",
-			agent=self.overseer()
-		)
-
-		# Task for the prompt expert to handle relevant queries
-		expert_task = Task(
-			description=f"""
-			Only respond if the overseer has delegated this query to you.
-			If the overseer did not delegate (no 'DELEGATE:' prefix), remain silent.
-			
+			Provide a direct response to this query. You are an expert in general AI topics and conversation.
 			Format your response using markdown:
 			- Use **bold** for emphasis
 			- Use headings where appropriate (# for main headings)
@@ -100,35 +77,43 @@ class AiAssistanceCrew():
 			- Use code blocks with ```language for code
 			- Use > for quotes or important notes
 			
-			Query: {user_query}
+			If you need prompt engineering expertise, respond with 'DELEGATE: <reason>'.
+			Otherwise, provide a helpful response directly.
 			""",
-			expected_output="Markdown-formatted expert advice on prompt engineering (only if delegated)",
+			expected_output="Markdown-formatted response",
 			agent=self.prompt_expert()
 		)
 
+		tasks = [response_task]
+		agents = [self.prompt_expert()]
+
 		return Crew(
-			agents=[self.prompt_expert()],
-			tasks=[analysis_task, expert_task],
+			agents=agents,
+			tasks=tasks,
 			manager_agent=self.overseer(),
 			process=Process.hierarchical,
-			verbose=True
+			verbose=True,
+			memory=True
 		)
 
 	def process_query(self, user_query: str) -> str:
 		"""Process a query and return the formatted response"""
 		print(f"\n🤖 Processing query: {user_query}")
 		
+		# Add user query to history
+		self.chat_history.append(user_query)
+		
 		crew = self.create_crew(user_query)
 		result = crew.kickoff()
 		
 		print("\n✨ Processing complete")
 		
-		# Get the overseer's analysis
+		# Get the response
 		response = str(result.output) if hasattr(result, 'output') else str(result)
-
-		# If the overseer delegated, use the expert's response
-		if response.startswith('DELEGATE:'):
-			if hasattr(result, 'task_outputs') and len(result.task_outputs) > 1:
-				response = str(result.task_outputs[1])
 		
-		return self.format_response(response)
+		formatted_response = self.format_response(response)
+		
+		# Add assistant response to history
+		self.chat_history.append(formatted_response)
+		
+		return formatted_response

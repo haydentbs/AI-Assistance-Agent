@@ -9,7 +9,7 @@ overseer:
     specialist expertise.
   allow_delegation: true
   verbose: true
-  tools_enabled: false
+  
 
 prompt_expert:
   role: Prompt Engineering Specialist
