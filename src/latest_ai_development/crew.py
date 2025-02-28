@@ -4,7 +4,7 @@
 # langtrace.init(api_key='')
 
 from crewai import Agent, Crew, Process, Task
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, crew, task, after_kickoff, before_kickoff
 
 @CrewBase
 class AiAssistanceCrew():
@@ -23,6 +23,8 @@ class AiAssistanceCrew():
 	def load_knowledge_base(self):
 		# Implement knowledge base loading from provided docs
 		pass
+
+
 
 	@agent
 	def overseer(self) -> Agent:
