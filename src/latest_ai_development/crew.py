@@ -5,6 +5,8 @@
 
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task, after_kickoff, before_kickoff
+from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
+
 
 @CrewBase
 class AiAssistanceCrew():
@@ -21,25 +23,97 @@ class AiAssistanceCrew():
 		self.chat_history = []  # Add chat history list
 
 	def load_knowledge_base(self):
-		# Implement knowledge base loading from provided docs
-		pass
-
-
+		"""Load knowledge base files for each specialist agent"""
+		import os
+		
+		knowledge_base = {}
+		# Use absolute path to knowledge directory
+		knowledge_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'knowledge')
+		
+		# Check if knowledge directory exists
+		if not os.path.exists(knowledge_dir):
+			os.makedirs(knowledge_dir)
+			print(f"Created knowledge directory at {knowledge_dir}")
+			return knowledge_base
+		
+		# Load knowledge files for each agent
+		for agent_file in os.listdir(knowledge_dir):
+			if agent_file.endswith('.txt'):
+				agent_name = agent_file.split('.')[0]
+				file_path = os.path.join(knowledge_dir, agent_file)
+				
+				try:
+					# Use relative path from the current directory
+					relative_path = os.path.relpath(file_path)
+					knowledge_base[agent_name] = TextFileKnowledgeSource(
+						file_paths=[relative_path]
+					)
+					print(f"Loaded knowledge for {agent_name} from {relative_path}")
+				except Exception as e:
+					print(f"Error loading {agent_name}: {str(e)}")
+		
+		print(knowledge_base)
+		return knowledge_base
+	
 
 	@agent
-	def overseer(self) -> Agent:
-		return Agent(
+	def overseer(self,  knowledge=False) -> Agent:
+		if knowledge:
+			return Agent(
 			config=self.agents_config['overseer'],
 			verbose=True,
 			allow_delegation=True,
+			knowledge_sources=self.knowledge_base['overseer']
+		)
+		else:
+			return Agent(
+				config=self.agents_config['overseer'],
+				verbose=True,
+				allow_delegation=True,
 		)
 	
 	@agent
-	def prompt_expert(self) -> Agent:
-		return Agent(
-			config=self.agents_config['prompt_expert'],
-			verbose=True
-		)
+	def prompt_expert(self, knowledge=False) -> Agent:
+		if knowledge:
+			return Agent(
+				config=self.agents_config['prompt_expert'],
+				verbose=True,
+				knowledge_sources=self.knowledge_base['prompt_expert']
+			)
+		else:
+			return Agent(
+				config=self.agents_config['prompt_expert'],
+				verbose=True
+			)
+
+	@agent
+	def risk_management_expert(self, knowledge=False) -> Agent:
+		if knowledge:
+			return Agent(
+				config=self.agents_config['risk_management_expert'],
+				verbose=True,
+				knowledge_sources=self.knowledge_base['risk_management_expert']
+			)
+		else:
+			return Agent(
+				config=self.agents_config['risk_management_expert'],
+				verbose=True
+			)
+	
+	@agent
+	def usecase_discovery_expert(self,  knowledge=False) -> Agent:
+		if knowledge:
+			return Agent(
+				config=self.agents_config['usecase_discovery_expert'],
+				verbose=True,
+				knowledge_sources=self.knowledge_base['usecase_discovery_expert']
+			)
+		else:
+			return Agent(
+				config=self.agents_config['usecase_discovery_expert'],
+				verbose=True
+			)
+
 
 	def format_response(self, response: str) -> str:
 		"""Format the response in a clean markdown format"""
@@ -79,15 +153,30 @@ class AiAssistanceCrew():
 			- Use code blocks with ```language for code
 			- Use > for quotes or important notes
 			
-			If you need prompt engineering expertise, respond with 'DELEGATE: <reason>'.
+			If you need prompt engineering expertise, respond with 'DELEGATE: prompt_expert <reason>'.
+			If you need AI risk management expertise, respond with 'DELEGATE: risk_management_expert <reason>'.
+			If you need AI use case discovery expertise, respond with 'DELEGATE: usecase_discovery_expert <reason>'.
 			Otherwise, provide a helpful response directly.
 			""",
 			expected_output="Markdown-formatted response",
 			agent=self.prompt_expert()
 		)
 
+		# Create agents with their knowledge bases
+		prompt_expert_agent = self.prompt_expert()
+		if 'prompt_expert' in self.knowledge_base:
+			prompt_expert_agent.context = self.knowledge_base['prompt_expert']
+		
+		risk_management_expert_agent = self.risk_management_expert()
+		if 'risk_management_expert' in self.knowledge_base:
+			risk_management_expert_agent.context = self.knowledge_base['risk_management_expert']
+		
+		usecase_discovery_expert_agent = self.usecase_discovery_expert()
+		if 'usecase_discovery_expert' in self.knowledge_base:
+			usecase_discovery_expert_agent.context = self.knowledge_base['usecase_discovery_expert']
+
 		tasks = [response_task]
-		agents = [self.prompt_expert()]
+		agents = [prompt_expert_agent, risk_management_expert_agent, usecase_discovery_expert_agent]
 
 		return Crew(
 			agents=agents,

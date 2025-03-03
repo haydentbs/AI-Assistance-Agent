@@ -1,0 +1,69 @@
+# Prompt Engineering Knowledge Base
+
+## Core Principles of Effective Prompts
+
+### Clarity and Specificity
+- Be explicit about the desired output format, tone, and content
+- Provide clear constraints and boundaries
+- Specify the role the AI should adopt (e.g., "Act as a financial advisor")
+
+### Context Provision
+- Include relevant background information
+- Define key terms if domain-specific knowledge is required
+- Provide examples when possible to guide the model
+
+### Structured Formatting
+- Use numbered lists for sequential instructions
+- Employ bullet points for parallel options
+- Utilize markdown formatting to emphasize important elements
+
+## Advanced Techniques
+
+### Chain-of-Thought Prompting
+- Guide the model to "think step by step" for complex reasoning
+- Break down multi-step problems explicitly
+- Ask the model to explain its reasoning process
+
+### Few-Shot Learning
+- Provide 2-3 examples of desired input-output pairs
+- Ensure examples cover different cases or edge conditions
+- Maintain consistent formatting across examples
+
+### Role-Based Prompting
+- Assign specific personas to the AI (e.g., "You are an expert physicist")
+- Define the relationship between the AI and user (e.g., mentor/student)
+- Set appropriate expertise levels based on the target audience
+
+## Common Pitfalls
+
+### Ambiguity
+- Vague instructions lead to unpredictable outputs
+- Undefined terms create room for misinterpretation
+- Conflicting directives cause confusion
+
+### Prompt Injection Vulnerabilities
+- Be cautious about allowing unfiltered user input in prompts
+- Implement guardrails against instruction overrides
+- Use separate prompts for system instructions and user content
+
+### Hallucination Triggers
+- Avoid asking for information beyond the model's knowledge cutoff
+- Be cautious with prompts requesting highly specific facts
+- Implement fact-checking mechanisms for critical information
+
+## Optimization Strategies
+
+### Iterative Refinement
+- Start with a basic prompt and incrementally improve
+- Test variations to identify which elements improve performance
+- Document successful patterns for reuse
+
+### Temperature and Sampling Controls
+- Lower temperature (0.1-0.4) for factual, deterministic responses
+- Higher temperature (0.7-1.0) for creative applications
+- Consider using top_p sampling for controlled creativity
+
+### Prompt Templates
+- Create reusable templates for common use cases
+- Include placeholders for variable content
+- Document the purpose and limitations of each template 
